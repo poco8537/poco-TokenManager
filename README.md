@@ -1,8 +1,9 @@
-## As far as I know, the cheater cannot add event handlers using a Lua injector. This script was written on that assumption, so if the above explanation is wrong, the this script is useless.
+## This approach is a mitigation tool rather than a complete solution.
 
 ## TokenManager
 
-`TokenManager` is a FiveM script that adds **token-based authentication** to server events, cheater from calling protected handlers. Since cheaters can’t generate valid tokens on their own, your server-side logic remains secure.
+`TokenManager` is a FiveM script that adds **data encryption** and **token-based authentication** to server events, preventing cheaters from invoking protected handlers.
+
 
 ---
 
@@ -30,26 +31,33 @@
    In the `fxmanifest.lua` of the resource you want to protect, add:
 
    ```lua
-   client_script "@poco-TokenManager/client/client.lua"
-   server_script "@poco-TokenManager/server/server.lua"
+   client_scripts {
+       "@poco-TokenManager/client/obfuscate.lua",
+       "@poco-TokenManager/client/main.lua",
+   }
+   server_scripts {
+       "@poco-TokenManager/server/obfuscate.lua",
+       "@poco-TokenManager/server/main.lua",
+   }
+   shared_script "@poco-TokenManager/shared/uuid.lua"
    ```
 
 2. **Server Events**
    In your server-side Lua, register events with `TokenManager.wrapWithTokenValidation`:
-
+   
    ```lua
    RegisterNetEvent("chat", TokenManager.wrapWithTokenValidation(function(msssage)
-       local src = source
-       TriggerClientEvent("chatMessage", -1, {255, 255, 255}, msssage)
+      local src = source
+      TriggerClientEvent("chatMessage", -1, {255, 255, 255}, msssage)
    end))
    ```
 
 3. **Request Token from Client Before Triggering**
    Replace direct `TriggerServerEvent` calls in your client scripts with:
-
+   
    ```lua
-   TokenManager.GetToken(function(token)
-       TriggerServerEvent("chat", token, "Hello!")
+   TokenManager.GetEvent("chat"--[[EventName]], function(emitValidatedEvent)
+      emitValidatedEvent("Hello!")
    end)
    ```
 
@@ -65,8 +73,8 @@ end))
 
 -- client.lua
 RegisterCommand("newchat", function()
-   TokenManager.GetToken(function(token)
-      TriggerServerEvent("chat", token, "Hello!")
+   TokenManager.GetEvent("chat"--[[EventName]], function(emitValidatedEvent)
+      emitValidatedEvent("Hello!")
    end)
 end)
 ```
