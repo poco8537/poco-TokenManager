@@ -17,12 +17,6 @@
    ensure poco-TokenManager
    ```
 
-   or
-
-   ```cfg
-   start poco-TokenManager
-   ```
-
 ---
 
 ### Usage
